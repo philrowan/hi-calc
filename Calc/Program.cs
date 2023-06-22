@@ -44,6 +44,7 @@ while (true)
         currentValue = Eval(tokens.SkipLast(1).ToList());
         lastEnteredValue = currentValue;
         tokens.Clear();
+        tokens.Add(new Token(TokenType.Number, 0, currentValue.ToString(), currentValue));
     }
 }
 
