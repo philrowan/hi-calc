@@ -1,13 +1,11 @@
 ﻿using Calc;
+using System.Text;
 
-var currentValue = 0;
-var lastEnteredValue = 0;
-
-var tokens = new List<Token>();
+var tokens = Reset();
 
 while (true)
 {
-    Console.WriteLine(lastEnteredValue);
+    Console.WriteLine(tokens.Last(x => x.Type == TokenType.Number).Value);
     Console.Write("> ");
 
     var line = Console.ReadLine();
@@ -16,47 +14,96 @@ while (true)
         return;
     }
 
+    // skip lexing the clear token
+    if (line == "c")
+    {
+        tokens = Reset();
+        continue;
+    }
+
     var lexer = new Lexer(line);
     var token = lexer.NextToken();
     while (token.Type != TokenType.EndOfFile)
     {
-        Console.WriteLine($"token: {token}");
         if (token.Type == TokenType.Unknown)
         {
-            Console.WriteLine($"Skipped unknown syntax at position {token.Position}");
-            token = lexer.NextToken();
-            continue;
+            Console.WriteLine($"Skipped unknown token at position {token.Position}");
+            break;
         }
 
-        tokens.Add(token);
-        if (token.Type == TokenType.Number)
+        if (!IsTokenExpected(token.Type))
         {
-            lastEnteredValue = (int)token.Value!;
+            Console.WriteLine($"Unexpected token at position {token.Position}");
+            break;
         }
+
+        // if we have exactly 1 number token and the user is putting in a number, 
+        // we will replace that token with whatever is input
+        // This is so that the "default" zero token can be replaced 
+        // and also allows for the current state to be effectivly replaced in the first input is not an operation.
+        // > 10 + 1=
+        // 11
+        // > 45+1=
+        // 46
+        if (tokens.Count == 1 && tokens.First().Type == TokenType.Number && token.Type == TokenType.Number)
+        {
+            tokens.Clear();
+        }
+        tokens.Add(token);
 
         token = lexer.NextToken();
     }
 
-
     // if the line ends in =, evaluate it
     if (tokens.Count > 1 && tokens.Last().Type == TokenType.Equals)
     {
-        currentValue = Eval(tokens.SkipLast(1).ToList());
-        lastEnteredValue = currentValue;
+        var value = Eval(tokens.SkipLast(1).ToList());
         tokens.Clear();
-        tokens.Add(new Token(TokenType.Number, 0, currentValue.ToString(), currentValue));
+        tokens.Add(new Token(TokenType.Number, 0, value));
     }
 }
 
-void PrintTokens(List<Token> tokens)
+bool IsTokenExpected(TokenType type)
 {
-    Console.Write("TOKENS: ");
-    foreach (var token in tokens)
+    if (type == TokenType.Number)
     {
-        Console.Write(token.Text);
+        return (tokens.Last().Type & TokenType.Multiply | TokenType.Divide | TokenType.Add | TokenType.Subtract) != 0;
     }
 
-    Console.WriteLine();
+    if ((type & TokenType.Multiply | TokenType.Divide | TokenType.Add | TokenType.Subtract) > 0)
+    {
+        return tokens.Last().Type == TokenType.Number;
+    }
+
+    return false;
+}
+
+List<Token> Reset()
+{
+    var tokens = new List<Token>
+    {
+        new Token(TokenType.Number, 0, 0)
+    };
+    return tokens;
+}
+
+
+void PrintTokens(List<Token> tokens)
+{
+    var text = new StringBuilder();
+    foreach (var token in tokens)
+    {
+        text.Append(token.Type switch
+        {
+            TokenType.Add => "+",
+            TokenType.Subtract => "-",
+            TokenType.Multiply => "*",
+            TokenType.Divide => "/",
+            TokenType.Number => token.Value,
+            _ => string.Empty
+        });
+    }
+    Console.WriteLine(text);
 }
 
 int Eval(List<Token> tokens)
@@ -78,7 +125,7 @@ bool DoOperations(TokenType type, List<Token> tokens)
     var newTokens = new List<Token>();
     if (tokens.Any(x => (x.Type & type) > 0))
     {
-        PrintTokens(tokens);
+        // PrintTokens(tokens);
 
         var op = tokens.First(x => (x.Type & type) > 0);
         var opIndex = tokens.IndexOf(op);
@@ -87,7 +134,7 @@ bool DoOperations(TokenType type, List<Token> tokens)
         var value = CalculateValue(op.Type, (int)left.Value!, (int)right.Value!);
 
         // insert the new token before the left operand
-        tokens.Insert(opIndex - 1, new Token(TokenType.Number, opIndex - 1, value.ToString(), value));
+        tokens.Insert(opIndex - 1, new Token(TokenType.Number, opIndex - 1, value));
         // remove x op y
         tokens.RemoveRange(opIndex, 3);
 

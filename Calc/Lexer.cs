@@ -14,7 +14,7 @@ enum TokenType
     EndOfFile = 128
 }
 
-record Token(TokenType Type, int Position, string Text, object? Value);
+record Token(TokenType Type, int Position, int? Value);
 
 class Lexer
 {
@@ -49,7 +49,7 @@ class Lexer
         var length = _position - start;
         if (int.TryParse(_text.AsSpan(start, length), out var value))
         {
-            return new Token(TokenType.Number, start, _text.Substring(start, length), isNegative ? (-1 * value) : value);
+            return new Token(TokenType.Number, start, isNegative ? (-1 * value) : value);
         }
         else
         {
@@ -61,7 +61,7 @@ class Lexer
     {
         if (_position >= _text.Length)
         {
-            return new Token(TokenType.EndOfFile, _position, "\0", null);
+            return new Token(TokenType.EndOfFile, _position, null);
         }
 
         if (char.IsDigit(Current))
@@ -71,23 +71,23 @@ class Lexer
 
         if (Current == '+')
         {
-            return new Token(TokenType.Add, _position++, "+", null);
+            return new Token(TokenType.Add, _position++, null);
         }
         else if (Current == '-')
         {
-            return new Token(TokenType.Subtract, _position++, "-", null);
+            return new Token(TokenType.Subtract, _position++, null);
         }
         else if (Current == '*')
         {
-            return new Token(TokenType.Multiply, _position++, "*", null);
+            return new Token(TokenType.Multiply, _position++, null);
         }
         else if (Current == '/')
         {
-            return new Token(TokenType.Divide, _position++, "/", null);
+            return new Token(TokenType.Divide, _position++, null);
         }
         else if (Current == '=')
         {
-            return new Token(TokenType.Equals, _position++, "=", null);
+            return new Token(TokenType.Equals, _position++, null);
         }
         else if (Current == '!')
         {
@@ -95,6 +95,6 @@ class Lexer
             return GetNumberToken(true);
         }
 
-        return new Token(TokenType.Unknown, _position++, _text.Substring(_position - 1, 1), null);
+        return new Token(TokenType.Unknown, _position++, null);
     }
 }
