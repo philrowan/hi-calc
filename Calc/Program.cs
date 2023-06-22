@@ -1,11 +1,13 @@
-﻿// See https://aka.ms/new-console-template for more information
-using Calc;
+﻿using Calc;
 
-Console.WriteLine("----");
 
+var currentValue = 0;
+var lastEnteredValue = 0;
+var stack = new Stack<Token>();
 
 while (true)
 {
+    Console.WriteLine(lastEnteredValue);
     Console.Write("> ");
     var line = Console.ReadLine();
     if (line is null)
@@ -18,6 +20,15 @@ while (true)
     while (token.Type != TokenType.EndOfFile)
     {
         Console.WriteLine(token);
+        if (token.Type != TokenType.Unknown)
+        {
+            stack.Push(token);
+        }
         token = lexer.NextToken();
+    }
+
+    if (stack.Count > 0 && stack.Peek().Type == TokenType.Equals)
+    {
+        // calculate
     }
 }

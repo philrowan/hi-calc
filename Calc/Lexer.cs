@@ -39,6 +39,24 @@ class Lexer
         }
     }
 
+    private Token GetNumberToken(bool isNegative = false)
+    {
+        var start = _position;
+        while (char.IsDigit(Current))
+        {
+            _position++;
+        }
+        var length = _position - start;
+        if (int.TryParse(_text.AsSpan(start, length), out var value))
+        {
+            return new Token(TokenType.Number, start, isNegative ? (-1 * value) : value);
+        }
+        else
+        {
+            throw new NotAnIntegerException($"Input beginning at position {start} is not a valid integer");
+        }
+    }
+
     public Token NextToken()
     {
         if (_position >= _text.Length)
@@ -48,20 +66,7 @@ class Lexer
 
         if (char.IsDigit(Current))
         {
-            var start = _position;
-            while (char.IsDigit(Current))
-            {
-                _position++;
-            }
-            var length = _position - start;
-            if (int.TryParse(_text.AsSpan(start, length), out var value))
-            {
-                return new Token(TokenType.Number, start, value);
-            }
-            else
-            {
-                throw new NotAnIntegerException($"Input beginning at position {start} is not a valid integer");
-            }
+            return GetNumberToken(false);
         }
 
         if (Current == '+')
@@ -86,7 +91,8 @@ class Lexer
         }
         else if (Current == '!')
         {
-            return new Token(TokenType.Negate, _position++, null);
+            _position++;
+            return GetNumberToken(true);
         }
 
         return new Token(TokenType.Unknown, _position++, null);
