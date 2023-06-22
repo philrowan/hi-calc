@@ -3,6 +3,13 @@
 namespace Calc;
 class Evaluator
 {
+    private readonly bool _debug;
+
+    public Evaluator(bool debug)
+    {
+        _debug = debug;
+    }
+
     public int Eval(List<Token> tokens)
     {
         if (tokens.Count == 1)
@@ -17,12 +24,15 @@ class Evaluator
         return (int)tokens.First().Value!;
     }
 
-    static bool DoOperations(TokenType type, List<Token> tokens)
+    bool DoOperations(TokenType type, List<Token> tokens)
     {
         var newTokens = new List<Token>();
         if (tokens.Any(x => (x.Type & type) > 0))
         {
-            // PrintTokens(tokens);
+            if (_debug)
+            {
+                PrintTokens(tokens);
+            }
 
             var op = tokens.First(x => (x.Type & type) > 0);
             var opIndex = tokens.IndexOf(op);

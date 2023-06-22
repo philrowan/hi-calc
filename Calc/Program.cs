@@ -1,6 +1,7 @@
 ﻿using Calc;
 
-var evauluator = new Evaluator();
+var debug = args.Contains("-d");
+var evauluator = new Evaluator(debug);
 var parser = new Parser();
 
 while (true)
