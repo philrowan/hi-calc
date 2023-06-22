@@ -26,6 +26,11 @@ class Evaluator
 
             var op = tokens.First(x => (x.Type & type) > 0);
             var opIndex = tokens.IndexOf(op);
+            if (opIndex == 0 || opIndex == tokens.Count - 1)
+            {
+                Console.WriteLine("Encountered incomplete expression");
+                return false;
+            }
             var left = tokens[opIndex - 1];
             var right = tokens[opIndex + 1];
             var value = CalculateValue(op.Type, (int)left.Value!, (int)right.Value!);
